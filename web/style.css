@@ -1,0 +1,83 @@
+body {
+    font: 11pt sans-serif;
+    line-height: 1.5em;
+    width: 75%;
+    max-width: 250pt;
+    margin: auto;
+    background: #fefefe;
+    height: 100%;
+}
+
+h1 {
+    font-size: 14pt;
+    line-height: 1em;
+    font-weight: 400;
+    border-bottom: 1pt solid;
+}
+
+p {
+    text-align: justify;
+}
+
+.board {
+    display: grid;
+    grid-template-columns: repeat(3, 33.3%);
+    width: 100pt;
+    height: 100pt;
+    margin: auto;
+    background: lightgray;
+    border-radius: 5pt;
+}
+
+.tile {
+    color: #333;
+    border: 1pt solid;
+    border-radius: 2pt;
+    box-shadow: 1pt 1pt 2pt rgba(0, 0, 0, 0.2);
+    text-align: center;
+    margin: 2pt;
+    padding: 2pt;
+    background: #eee;
+    cursor: pointer;
+    font: 18pt monospace;
+}
+
+.blank {
+    background: lightgray;
+    border: none;
+    box-shadow: none;
+}
+
+#board-container {
+    font: 12pt monospace;
+    width: 125pt;
+    height: 200pt;
+    margin: auto;
+    margin-top: 30pt;
+    text-align: center;
+}
+
+.heuristic {
+    text-align: center;
+    color: gray;
+    margin-bottom: 5pt;
+    margin-top: 5pt;
+
+}
+
+.thinking {
+    font-size: 10pt;
+    font-style: italic;
+}
+
+button {
+    width: 80%;
+    margin-bottom: 2pt;
+}
+
+#credit {
+    font-size: 8pt;
+    color: gray;
+    text-align: center;
+    border-top: 1pt solid;
+}

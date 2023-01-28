@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>8-Game Solver</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <h1>8-Game Solver</h1>
+    <p>This is a little demo that uses A* path-finding to solve
+        <em>8-Game</em>. The sum of Manhattan distances between tiles and their
+        correct destinations is used as a heuristic.
+    </p>
+    <p>Click on the tiles to slide them, on the <em>Shuffle!</em> button to
+        perform a thousand random moves, or on the <em>Solve!</em> button to see
+        the solution.</p>
+    <div id="board-container"></div>
+    <div id="credit">
+        Richard Ambler / January 2023 / TESU COS-451 / <a href="">Source</a>
+    </div>
+    <script src="solver.js"></script>
+</body>
+
+</html>
