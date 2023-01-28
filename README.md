@@ -2,4 +2,4 @@
 
 Welcome to 8-game solver, a little demo that uses the A* path search algorithm to solve the (in)famous sliding tiles game.
 
-You can play around with the app here.
+You can [play around with the app here](https://8-game-solver.netlify.app/).
