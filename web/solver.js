@@ -239,6 +239,9 @@
     LateError$fieldNI(fieldName) {
       return new A.LateError("Field '" + fieldName + "' has not been initialized.");
     },
+    LateError$localNI(localName) {
+      return new A.LateError("Local '" + localName + "' has not been initialized.");
+    },
     LateError$fieldAI(fieldName) {
       return new A.LateError("Field '" + fieldName + "' has already been initialized.");
     },
@@ -566,13 +569,6 @@
         index1 = index0 + 1;
         result.$indexSet(0, keyValuePairs[index], keyValuePairs[index0]);
       }
-      return result;
-    },
-    fillLiteralSet(values, result) {
-      var index,
-        $length = values.length;
-      for (index = 0; index < $length; ++index)
-        result.add$1(0, values[index]);
       return result;
     },
     invokeClosure(closure, numberOfArguments, arg1, arg2, arg3, arg4) {
@@ -1030,15 +1026,15 @@
     JsLinkedHashMap: function JsLinkedHashMap(t0) {
       var _ = this;
       _.__js_helper$_length = 0;
-      _.__js_helper$_last = _.__js_helper$_first = _.__js_helper$_rest = _.__js_helper$_nums = _.__js_helper$_strings = null;
-      _.__js_helper$_modifications = 0;
+      _._last = _._first = _.__js_helper$_rest = _._nums = _._strings = null;
+      _._modifications = 0;
       _.$ti = t0;
     },
     LinkedHashMapCell: function LinkedHashMapCell(t0, t1) {
       var _ = this;
       _.hashMapCellKey = t0;
       _.hashMapCellValue = t1;
-      _.__js_helper$_previous = _.__js_helper$_next = null;
+      _._previous = _._next = null;
     },
     LinkedHashMapKeyIterable: function LinkedHashMapKeyIterable(t0, t1) {
       this._map = t0;
@@ -1047,8 +1043,8 @@
     LinkedHashMapKeyIterator: function LinkedHashMapKeyIterator(t0, t1, t2) {
       var _ = this;
       _._map = t0;
-      _.__js_helper$_modifications = t1;
-      _.__js_helper$_current = _.__js_helper$_cell = null;
+      _._modifications = t1;
+      _.__js_helper$_current = _._cell = null;
       _.$ti = t2;
     },
     initHooks_closure: function initHooks_closure(t0) {
@@ -1059,6 +1055,23 @@
     },
     initHooks_closure1: function initHooks_closure1(t0) {
       this.prototypeForTag = t0;
+    },
+    throwLateFieldNI(fieldName) {
+      return A.throwExpression(A.LateError$fieldNI(fieldName));
+    },
+    throwLateFieldAI(fieldName) {
+      return A.throwExpression(A.LateError$fieldAI(fieldName));
+    },
+    throwLateFieldADI(fieldName) {
+      return A.throwExpression(new A.LateError("Field '" + fieldName + "' has been assigned during initialization."));
+    },
+    _Cell$named(_name) {
+      var t1 = new A._Cell(_name);
+      return t1._value = t1;
+    },
+    _Cell: function _Cell(t0) {
+      this._name = t0;
+      this._value = null;
     },
     Rti__getQuestionFromStar(universe, rti) {
       var question = rti._precomputed1;
@@ -2894,9 +2907,6 @@
     LinkedHashSet_LinkedHashSet($E) {
       return new A._LinkedHashSet($E._eval$1("_LinkedHashSet<0>"));
     },
-    LinkedHashSet_LinkedHashSet$_literal(values, $E) {
-      return $E._eval$1("LinkedHashSet<0>")._as(A.fillLiteralSet(values, new A._LinkedHashSet($E._eval$1("_LinkedHashSet<0>"))));
-    },
     _LinkedHashSet__newHashTable() {
       var table = Object.create(null);
       table["<non-identifier-key>"] = table;
@@ -3057,19 +3067,19 @@
     _LinkedHashSet: function _LinkedHashSet(t0) {
       var _ = this;
       _._collection$_length = 0;
-      _._last = _._first = _._collection$_rest = _._nums = _._strings = null;
-      _._modifications = 0;
+      _._collection$_last = _._collection$_first = _._collection$_rest = _._collection$_nums = _._collection$_strings = null;
+      _._collection$_modifications = 0;
       _.$ti = t0;
     },
     _LinkedHashSetCell: function _LinkedHashSetCell(t0) {
       this._collection$_element = t0;
-      this._previous = this._next = null;
+      this._collection$_previous = this._collection$_next = null;
     },
     _LinkedHashSetIterator: function _LinkedHashSetIterator(t0, t1, t2) {
       var _ = this;
       _._set = t0;
-      _._modifications = t1;
-      _._collection$_current = _._cell = null;
+      _._collection$_modifications = t1;
+      _._collection$_current = _._collection$_cell = null;
       _.$ti = t2;
     },
     ListBase: function ListBase() {
@@ -3534,45 +3544,54 @@
       return result;
     },
     a_star_solve(board) {
-      var solution, first, best, g, t3, t4, t5, _i, nextBoard, t6, result,
-        t1 = type$.Board,
-        visited = A.LinkedHashMap_LinkedHashMap$_literal([board, new A.Node(board, 0)], t1, type$.Node_2),
-        frontier = A.LinkedHashSet_LinkedHashSet$_literal([board], t1),
-        t2 = frontier.$ti._precomputed1;
-      while (true) {
-        if (!(frontier._collection$_length !== 0)) {
-          solution = null;
+      var best, t1, t2, t3, _i, nextBoard, nextNode, t4, result,
+        node0 = new A.Node(board, null, 0),
+        frontier = A._setArrayType([node0], type$.JSArray_Node),
+        reached = A.LinkedHashMap_LinkedHashMap$_literal([board, node0], type$.Board, type$.Node_2),
+        solution = A._Cell$named("solution");
+      for (; frontier.length !== 0;) {
+        best = B.JSArray_methods.get$first(frontier);
+        B.JSArray_methods.remove$1(frontier, best);
+        t1 = best.state;
+        if (t1.heuristic$0() === 0) {
+          solution._value = best;
           break;
         }
-        first = frontier._first;
-        if (first == null)
-          A.throwExpression(A.StateError$("No elements"));
-        best = frontier.fold$1$2(0, t2._as(first._collection$_element), new A.a_star_solve_closure(visited), t1);
-        frontier.remove$1(0, best);
-        g = visited.$index(0, best).g;
-        if (best.heuristic$0() === 0) {
-          solution = best;
-          break;
-        }
-        for (t3 = best.validMoves$0(), t4 = t3.length, t5 = g + 1, _i = 0; _i < t3.length; t3.length === t4 || (0, A.throwConcurrentModificationError)(t3), ++_i) {
-          nextBoard = A.Board_Board$from(best, t3[_i]);
-          if (!visited.containsKey$1(nextBoard)) {
-            visited.$indexSet(0, nextBoard, new A.Node(best, t5));
-            frontier.add$1(0, nextBoard);
-          } else if (visited.$index(0, nextBoard).g > t5) {
-            t6 = visited.$index(0, nextBoard);
-            t6.previous = best;
-            t6.g = t5;
-            frontier.add$1(0, nextBoard);
+        for (t2 = t1.validMoves$0(), t3 = t2.length, _i = 0; _i < t2.length; t2.length === t3 || (0, A.throwConcurrentModificationError)(t2), ++_i) {
+          nextBoard = A.Board_Board$from(t1, t2[_i]);
+          if (!reached.containsKey$1(nextBoard)) {
+            nextNode = new A.Node(nextBoard, best, best.g + 1);
+            reached.$indexSet(0, nextBoard, nextNode);
+            B.JSArray_methods.add$1(frontier, nextNode);
+          } else if (reached.$index(0, nextBoard).g > best.g + 1) {
+            t4 = reached.$index(0, nextBoard);
+            t4.parent = best;
+            t4.g = best.g + 1;
+            t4 = reached.$index(0, nextBoard);
+            t4.toString;
+            B.JSArray_methods.add$1(frontier, t4);
           }
         }
       }
       t1 = type$.JSArray_Board;
       result = A._setArrayType([], t1);
-      for (; !J.$eq$(solution, board);) {
-        solution.toString;
-        B.JSArray_methods.add$1(result, solution);
-        solution = visited.$index(0, solution).previous;
+      t2 = solution._name;
+      while (true) {
+        t3 = solution._value;
+        if (t3 === solution)
+          A.throwExpression(A.LateError$localNI(t2));
+        if (!!t3.state.$eq(0, board))
+          break;
+        t3 = solution._value;
+        if (t3 === solution)
+          A.throwExpression(A.LateError$localNI(t2));
+        B.JSArray_methods.add$1(result, t3.state);
+        t3 = solution._value;
+        if (t3 === solution)
+          A.throwExpression(A.LateError$localNI(t2));
+        t3 = t3.parent;
+        t3.toString;
+        solution._value = t3;
       }
       t1 = A._setArrayType([], t1);
       for (t2 = type$.ReversedListIterable_Board, t3 = new A.ReversedListIterable(result, t2), t3 = new A.ListIterator(t3, t3.get$length(t3), t2._eval$1("ListIterator<ListIterable.E>")), t2 = t2._eval$1("ListIterable.E"); t3.moveNext$0();) {
@@ -3580,6 +3599,15 @@
         t1.push(t4 == null ? t2._as(t4) : t4);
       }
       return t1;
+    },
+    Board: function Board(t0) {
+      this.tiles = t0;
+      this._heuristic = -1;
+    },
+    Node: function Node(t0, t1, t2) {
+      this.state = t0;
+      this.parent = t1;
+      this.g = t2;
     },
     BoardWidget$(board) {
       var t4,
@@ -3604,17 +3632,6 @@
       for (i = 0; i < 9; ++i)
         t2.push(i);
       B.DivElement_methods.set$children(t1, A._setArrayType([A.BoardWidget$(new A.Board(t2)).widgetDiv], type$.JSArray_Element));
-    },
-    Board: function Board(t0) {
-      this.tiles = t0;
-      this._heuristic = -1;
-    },
-    Node: function Node(t0, t1) {
-      this.previous = t0;
-      this.g = t1;
-    },
-    a_star_solve_closure: function a_star_solve_closure(t0) {
-      this.visited = t0;
     },
     BoardWidget: function BoardWidget(t0, t1, t2, t3, t4) {
       var _ = this;
@@ -3642,15 +3659,6 @@
     BoardWidget_showSolution_closure: function BoardWidget_showSolution_closure(t0, t1) {
       this.$this = t0;
       this.solution = t1;
-    },
-    throwLateFieldNI(fieldName) {
-      return A.throwExpression(A.LateError$fieldNI(fieldName));
-    },
-    throwLateFieldAI(fieldName) {
-      return A.throwExpression(A.LateError$fieldAI(fieldName));
-    },
-    throwLateFieldADI(fieldName) {
-      return A.throwExpression(new A.LateError("Field '" + fieldName + "' has been assigned during initialization."));
     }
   },
   J = {
@@ -3828,8 +3836,8 @@
     elementAt$1$ax(receiver, a0) {
       return J.getInterceptor$ax(receiver).elementAt$1(receiver, a0);
     },
-    remove$0$x(receiver) {
-      return J.getInterceptor$x(receiver).remove$0(receiver);
+    remove$0$ax(receiver) {
+      return J.getInterceptor$ax(receiver).remove$0(receiver);
     },
     toLowerCase$0$s(receiver) {
       return J.getInterceptor$s(receiver).toLowerCase$0(receiver);
@@ -3938,6 +3946,17 @@
       if (!!receiver.fixed$length)
         A.throwExpression(A.UnsupportedError$("add"));
       receiver.push(value);
+    },
+    remove$1(receiver, element) {
+      var i;
+      if (!!receiver.fixed$length)
+        A.throwExpression(A.UnsupportedError$("remove"));
+      for (i = 0; i < receiver.length; ++i)
+        if (J.$eq$(receiver[i], element)) {
+          receiver.splice(i, 1);
+          return true;
+        }
+      return false;
     },
     elementAt$1(receiver, index) {
       if (!(index >= 0 && index < receiver.length))
@@ -4432,14 +4451,14 @@
     $index(_, key) {
       var strings, cell, t1, nums, _null = null;
       if (typeof key == "string") {
-        strings = this.__js_helper$_strings;
+        strings = this._strings;
         if (strings == null)
           return _null;
         cell = strings[key];
         t1 = cell == null ? _null : cell.hashMapCellValue;
         return t1;
       } else if (typeof key == "number" && (key & 0x3fffffff) === key) {
-        nums = this.__js_helper$_nums;
+        nums = this._nums;
         if (nums == null)
           return _null;
         cell = nums[key];
@@ -4465,11 +4484,11 @@
       t1._precomputed1._as(key);
       t1._rest[1]._as(value);
       if (typeof key == "string") {
-        strings = _this.__js_helper$_strings;
-        _this.__js_helper$_addHashTableEntry$3(strings == null ? _this.__js_helper$_strings = _this._newHashTable$0() : strings, key, value);
+        strings = _this._strings;
+        _this._addHashTableEntry$3(strings == null ? _this._strings = _this._newHashTable$0() : strings, key, value);
       } else if (typeof key == "number" && (key & 0x3fffffff) === key) {
-        nums = _this.__js_helper$_nums;
-        _this.__js_helper$_addHashTableEntry$3(nums == null ? _this.__js_helper$_nums = _this._newHashTable$0() : nums, key, value);
+        nums = _this._nums;
+        _this._addHashTableEntry$3(nums == null ? _this._nums = _this._newHashTable$0() : nums, key, value);
       } else {
         rest = _this.__js_helper$_rest;
         if (rest == null)
@@ -4477,56 +4496,56 @@
         hash = J.get$hashCode$(key) & 0x3fffffff;
         bucket = rest[hash];
         if (bucket == null)
-          rest[hash] = [_this.__js_helper$_newLinkedCell$2(key, value)];
+          rest[hash] = [_this._newLinkedCell$2(key, value)];
         else {
           index = _this.internalFindBucketIndex$2(bucket, key);
           if (index >= 0)
             bucket[index].hashMapCellValue = value;
           else
-            bucket.push(_this.__js_helper$_newLinkedCell$2(key, value));
+            bucket.push(_this._newLinkedCell$2(key, value));
         }
       }
     },
     forEach$1(_, action) {
       var cell, modifications, _this = this;
       _this.$ti._eval$1("~(1,2)")._as(action);
-      cell = _this.__js_helper$_first;
-      modifications = _this.__js_helper$_modifications;
+      cell = _this._first;
+      modifications = _this._modifications;
       for (; cell != null;) {
         action.call$2(cell.hashMapCellKey, cell.hashMapCellValue);
-        if (modifications !== _this.__js_helper$_modifications)
+        if (modifications !== _this._modifications)
           throw A.wrapException(A.ConcurrentModificationError$(_this));
-        cell = cell.__js_helper$_next;
+        cell = cell._next;
       }
     },
-    __js_helper$_addHashTableEntry$3(table, key, value) {
+    _addHashTableEntry$3(table, key, value) {
       var cell,
         t1 = this.$ti;
       t1._precomputed1._as(key);
       t1._rest[1]._as(value);
       cell = table[key];
       if (cell == null)
-        table[key] = this.__js_helper$_newLinkedCell$2(key, value);
+        table[key] = this._newLinkedCell$2(key, value);
       else
         cell.hashMapCellValue = value;
     },
-    __js_helper$_modified$0() {
-      this.__js_helper$_modifications = this.__js_helper$_modifications + 1 & 1073741823;
+    _modified$0() {
+      this._modifications = this._modifications + 1 & 1073741823;
     },
-    __js_helper$_newLinkedCell$2(key, value) {
+    _newLinkedCell$2(key, value) {
       var _this = this,
         t1 = _this.$ti,
         cell = new A.LinkedHashMapCell(t1._precomputed1._as(key), t1._rest[1]._as(value));
-      if (_this.__js_helper$_first == null)
-        _this.__js_helper$_first = _this.__js_helper$_last = cell;
+      if (_this._first == null)
+        _this._first = _this._last = cell;
       else {
-        t1 = _this.__js_helper$_last;
+        t1 = _this._last;
         t1.toString;
-        cell.__js_helper$_previous = t1;
-        _this.__js_helper$_last = t1.__js_helper$_next = cell;
+        cell._previous = t1;
+        _this._last = t1._next = cell;
       }
       ++_this.__js_helper$_length;
-      _this.__js_helper$_modified$0();
+      _this._modified$0();
       return cell;
     },
     internalFindBucketIndex$2(bucket, key) {
@@ -4557,8 +4576,8 @@
     },
     get$iterator(_) {
       var t1 = this._map,
-        t2 = new A.LinkedHashMapKeyIterator(t1, t1.__js_helper$_modifications, this.$ti._eval$1("LinkedHashMapKeyIterator<1>"));
-      t2.__js_helper$_cell = t1.__js_helper$_first;
+        t2 = new A.LinkedHashMapKeyIterator(t1, t1._modifications, this.$ti._eval$1("LinkedHashMapKeyIterator<1>"));
+      t2._cell = t1._first;
       return t2;
     }
   };
@@ -4569,15 +4588,15 @@
     moveNext$0() {
       var cell, _this = this,
         t1 = _this._map;
-      if (_this.__js_helper$_modifications !== t1.__js_helper$_modifications)
+      if (_this._modifications !== t1._modifications)
         throw A.wrapException(A.ConcurrentModificationError$(t1));
-      cell = _this.__js_helper$_cell;
+      cell = _this._cell;
       if (cell == null) {
         _this.set$__js_helper$_current(null);
         return false;
       } else {
         _this.set$__js_helper$_current(cell.hashMapCellKey);
-        _this.__js_helper$_cell = cell.__js_helper$_next;
+        _this._cell = cell._next;
         return true;
       }
     },
@@ -4604,6 +4623,7 @@
     },
     $signature: 11
   };
+  A._Cell.prototype = {};
   A.Rti.prototype = {
     _eval$1(recipe) {
       return A._Universe_evalInEnvironment(init.typeUniverse, this, recipe);
@@ -5023,8 +5043,8 @@
   A._LinkedHashSet.prototype = {
     get$iterator(_) {
       var _this = this,
-        t1 = new A._LinkedHashSetIterator(_this, _this._modifications, A._instanceType(_this)._eval$1("_LinkedHashSetIterator<1>"));
-      t1._cell = _this._first;
+        t1 = new A._LinkedHashSetIterator(_this, _this._collection$_modifications, A._instanceType(_this)._eval$1("_LinkedHashSetIterator<1>"));
+      t1._collection$_cell = _this._collection$_first;
       return t1;
     },
     get$length(_) {
@@ -5033,7 +5053,7 @@
     contains$1(_, object) {
       var strings, t1;
       if (object !== "__proto__") {
-        strings = this._strings;
+        strings = this._collection$_strings;
         if (strings == null)
           return false;
         return type$.nullable__LinkedHashSetCell._as(strings[object]) != null;
@@ -5052,11 +5072,11 @@
       var strings, nums, _this = this;
       A._instanceType(_this)._precomputed1._as(element);
       if (typeof element == "string" && element !== "__proto__") {
-        strings = _this._strings;
-        return _this._addHashTableEntry$2(strings == null ? _this._strings = A._LinkedHashSet__newHashTable() : strings, element);
+        strings = _this._collection$_strings;
+        return _this._collection$_addHashTableEntry$2(strings == null ? _this._collection$_strings = A._LinkedHashSet__newHashTable() : strings, element);
       } else if (typeof element == "number" && (element & 1073741823) === element) {
-        nums = _this._nums;
-        return _this._addHashTableEntry$2(nums == null ? _this._nums = A._LinkedHashSet__newHashTable() : nums, element);
+        nums = _this._collection$_nums;
+        return _this._collection$_addHashTableEntry$2(nums == null ? _this._collection$_nums = A._LinkedHashSet__newHashTable() : nums, element);
       } else
         return _this._add$1(element);
     },
@@ -5069,73 +5089,38 @@
       hash = _this._computeHashCode$1(element);
       bucket = rest[hash];
       if (bucket == null)
-        rest[hash] = [_this._newLinkedCell$1(element)];
+        rest[hash] = [_this._collection$_newLinkedCell$1(element)];
       else {
         if (_this._findBucketIndex$2(bucket, element) >= 0)
           return false;
-        bucket.push(_this._newLinkedCell$1(element));
+        bucket.push(_this._collection$_newLinkedCell$1(element));
       }
       return true;
     },
-    remove$1(_, object) {
-      var t1 = this._remove$1(object);
-      return t1;
-    },
-    _remove$1(object) {
-      var hash, bucket, index, cell, _this = this,
-        rest = _this._collection$_rest;
-      if (rest == null)
-        return false;
-      hash = _this._computeHashCode$1(object);
-      bucket = rest[hash];
-      index = _this._findBucketIndex$2(bucket, object);
-      if (index < 0)
-        return false;
-      cell = bucket.splice(index, 1)[0];
-      if (0 === bucket.length)
-        delete rest[hash];
-      _this._unlinkCell$1(cell);
-      return true;
-    },
-    _addHashTableEntry$2(table, element) {
+    _collection$_addHashTableEntry$2(table, element) {
       A._instanceType(this)._precomputed1._as(element);
       if (type$.nullable__LinkedHashSetCell._as(table[element]) != null)
         return false;
-      table[element] = this._newLinkedCell$1(element);
+      table[element] = this._collection$_newLinkedCell$1(element);
       return true;
     },
-    _modified$0() {
-      this._modifications = this._modifications + 1 & 1073741823;
+    _collection$_modified$0() {
+      this._collection$_modifications = this._collection$_modifications + 1 & 1073741823;
     },
-    _newLinkedCell$1(element) {
+    _collection$_newLinkedCell$1(element) {
       var t1, _this = this,
         cell = new A._LinkedHashSetCell(A._instanceType(_this)._precomputed1._as(element));
-      if (_this._first == null)
-        _this._first = _this._last = cell;
+      if (_this._collection$_first == null)
+        _this._collection$_first = _this._collection$_last = cell;
       else {
-        t1 = _this._last;
+        t1 = _this._collection$_last;
         t1.toString;
-        cell._previous = t1;
-        _this._last = t1._next = cell;
+        cell._collection$_previous = t1;
+        _this._collection$_last = t1._collection$_next = cell;
       }
       ++_this._collection$_length;
-      _this._modified$0();
+      _this._collection$_modified$0();
       return cell;
-    },
-    _unlinkCell$1(cell) {
-      var _this = this,
-        previous = cell._previous,
-        next = cell._next;
-      if (previous == null)
-        _this._first = next;
-      else
-        previous._next = next;
-      if (next == null)
-        _this._last = previous;
-      else
-        next._previous = previous;
-      --_this._collection$_length;
-      _this._modified$0();
     },
     _computeHashCode$1(element) {
       return J.get$hashCode$(element) & 1073741823;
@@ -5149,8 +5134,7 @@
         if (J.$eq$(bucket[i]._collection$_element, element))
           return i;
       return -1;
-    },
-    $isLinkedHashSet: 1
+    }
   };
   A._LinkedHashSetCell.prototype = {};
   A._LinkedHashSetIterator.prototype = {
@@ -5160,16 +5144,16 @@
     },
     moveNext$0() {
       var _this = this,
-        cell = _this._cell,
+        cell = _this._collection$_cell,
         t1 = _this._set;
-      if (_this._modifications !== t1._modifications)
+      if (_this._collection$_modifications !== t1._collection$_modifications)
         throw A.wrapException(A.ConcurrentModificationError$(t1));
       else if (cell == null) {
         _this.set$_collection$_current(null);
         return false;
       } else {
         _this.set$_collection$_current(_this.$ti._eval$1("1?")._as(cell._collection$_element));
-        _this._cell = cell._next;
+        _this._collection$_cell = cell._collection$_next;
         return true;
       }
     },
@@ -5247,16 +5231,6 @@
     },
     toString$0(_) {
       return A.IterableBase_iterableToFullString(this, "{", "}");
-    },
-    fold$1$2(_, initialValue, combine, $T) {
-      var t1, t2, value, element;
-      $T._as(initialValue);
-      A._instanceType(this)._bind$1($T)._eval$1("1(1,SetMixin.E)")._as(combine);
-      for (t1 = this.get$iterator(this), t2 = t1.$ti._precomputed1, value = initialValue; t1.moveNext$0();) {
-        element = t1._collection$_current;
-        value = combine.call$2(value, element == null ? t2._as(element) : element);
-      }
-      return value;
     },
     elementAt$1(_, index) {
       var t1, t2, elementIndex, element, _s5_ = "index";
@@ -5650,7 +5624,7 @@
           fragment.appendChild(t1);
       }
       if (contextElement !== $.Element__parseDocument.body)
-        J.remove$0$x(contextElement);
+        J.remove$0$ax(contextElement);
       treeSanitizer.sanitizeTree$1(fragment);
       document.adoptNode(fragment);
       return fragment;
@@ -6081,7 +6055,7 @@
     _removeNode$2(node, $parent) {
       ++this.numTreeModifications;
       if ($parent == null || $parent !== node.parentNode)
-        J.remove$0$x(node);
+        J.remove$0$ax(node);
       else
         $parent.removeChild(node);
     },
@@ -6402,18 +6376,8 @@
   };
   A.Node.prototype = {
     toString$0(_) {
-      return "g: " + this.g + ", previous:\n" + this.previous.toString$0(0);
+      return "g: " + this.g + ", previous:\n" + A.S(this.parent);
     }
-  };
-  A.a_star_solve_closure.prototype = {
-    call$2(previousBoard, nextBoard) {
-      var t1 = type$.Board;
-      t1._as(previousBoard);
-      t1._as(nextBoard);
-      t1 = this.visited;
-      return t1.$index(0, previousBoard).g + previousBoard.heuristic$0() < t1.$index(0, nextBoard).g + nextBoard.heuristic$0() ? previousBoard : nextBoard;
-    },
-    $signature: 19
   };
   A.BoardWidget.prototype = {
     BoardWidget$1(board) {
@@ -6571,7 +6535,7 @@
     call$1(_) {
       return this.$this.showSolution$1(B.JSArray_methods.sublist$1(this.solution, 1));
     },
-    $signature: 20
+    $signature: 19
   };
   (function aliases() {
     var _ = J.Interceptor.prototype;
@@ -6601,7 +6565,7 @@
       _inherit = hunkHelpers.inherit,
       _inheritMany = hunkHelpers.inheritMany;
     _inherit(A.Object, null);
-    _inheritMany(A.Object, [A.JS_CONST, J.Interceptor, J.ArrayIterator, A.Error, A.Iterable, A.ListIterator, A.Iterator, A.TypeErrorDecoder, A.NullThrownFromJavaScriptException, A._StackTrace, A.Closure, A.MapMixin, A.LinkedHashMapCell, A.LinkedHashMapKeyIterator, A.Rti, A._FunctionParameters, A._TimerImpl, A.AsyncError, A._FutureListener, A._Future, A._AsyncCallbackEntry, A.Stream, A.StreamSubscription, A._Zone, A.__SetBase_Object_SetMixin, A._LinkedHashSetCell, A._LinkedHashSetIterator, A._ListBase_Object_ListMixin, A.ListMixin, A.SetMixin, A.Duration, A.OutOfMemoryError, A.StackOverflowError, A._Exception, A.Null, A._StringStackTrace, A.StringBuffer, A.CssStyleDeclarationBase, A.EventStreamProvider, A._Html5NodeValidator, A.ImmutableListMixin, A.NodeValidatorBuilder, A._SimpleNodeValidator, A._SvgNodeValidator, A.FixedSizeListIterator, A._SameOriginUriPolicy, A._ValidatingTreeSanitizer, A._JSRandom, A.Board, A.Node, A.BoardWidget]);
+    _inheritMany(A.Object, [A.JS_CONST, J.Interceptor, J.ArrayIterator, A.Error, A.Iterable, A.ListIterator, A.Iterator, A.TypeErrorDecoder, A.NullThrownFromJavaScriptException, A._StackTrace, A.Closure, A.MapMixin, A.LinkedHashMapCell, A.LinkedHashMapKeyIterator, A._Cell, A.Rti, A._FunctionParameters, A._TimerImpl, A.AsyncError, A._FutureListener, A._Future, A._AsyncCallbackEntry, A.Stream, A.StreamSubscription, A._Zone, A.__SetBase_Object_SetMixin, A._LinkedHashSetCell, A._LinkedHashSetIterator, A._ListBase_Object_ListMixin, A.ListMixin, A.SetMixin, A.Duration, A.OutOfMemoryError, A.StackOverflowError, A._Exception, A.Null, A._StringStackTrace, A.StringBuffer, A.CssStyleDeclarationBase, A.EventStreamProvider, A._Html5NodeValidator, A.ImmutableListMixin, A.NodeValidatorBuilder, A._SimpleNodeValidator, A._SvgNodeValidator, A.FixedSizeListIterator, A._SameOriginUriPolicy, A._ValidatingTreeSanitizer, A._JSRandom, A.Board, A.Node, A.BoardWidget]);
     _inheritMany(J.Interceptor, [J.JSBool, J.JSNull, J.JavaScriptObject, J.JSArray, J.JSNumber, J.JSString]);
     _inheritMany(J.JavaScriptObject, [J.LegacyJavaScriptObject, A.EventTarget, A._CssStyleDeclaration_JavaScriptObject_CssStyleDeclarationBase, A.DomException, A.DomImplementation, A.DomTokenList, A.Event, A._HtmlCollection_JavaScriptObject_ListMixin, A.Location, A._NodeList_JavaScriptObject_ListMixin, A.__NamedNodeMap_JavaScriptObject_ListMixin]);
     _inheritMany(J.LegacyJavaScriptObject, [J.PlainJavaScriptObject, J.UnknownJavaScriptObject, J.JavaScriptFunction]);
@@ -6618,7 +6582,7 @@
     _inherit(A._AssertionError, A.AssertionError);
     _inherit(A.MapBase, A.MapMixin);
     _inheritMany(A.MapBase, [A.JsLinkedHashMap, A._AttributeMap]);
-    _inheritMany(A.Closure2Args, [A.initHooks_closure0, A.MapBase_mapToString_closure, A._ValidatingTreeSanitizer_sanitizeTree_walk, A.a_star_solve_closure]);
+    _inheritMany(A.Closure2Args, [A.initHooks_closure0, A.MapBase_mapToString_closure, A._ValidatingTreeSanitizer_sanitizeTree_walk]);
     _inherit(A._TypeError, A._Error);
     _inheritMany(A.Closure0Args, [A._AsyncRun__scheduleImmediateJsOverride_internalCallback, A._AsyncRun__scheduleImmediateWithSetImmediate_internalCallback, A._TimerImpl_internalCallback, A.Future_Future$delayed_closure, A._Future__addListener_closure, A._Future__prependListeners_closure, A._Future__propagateToListeners_handleWhenCompleteCallback, A._Future__propagateToListeners_handleValueCallback, A._Future__propagateToListeners_handleError, A.Stream_length_closure0, A._rootHandleError_closure, A._RootZone_bindCallbackGuarded_closure]);
     _inherit(A._RootZone, A._Zone);
@@ -6661,12 +6625,12 @@
     typeUniverse: {eC: new Map(), tR: {}, eT: {}, tPV: {}, sEA: []},
     mangledGlobalNames: {int: "int", double: "double", num: "num", String: "String", bool: "bool", Null: "Null", List: "List"},
     mangledNames: {},
-    types: ["~()", "~(MouseEvent)", "~(~())", "Null(@)", "Null()", "bool(Node0)", "bool(NodeValidator)", "bool(String)", "bool(Element,String,String,_Html5NodeValidator)", "@(@)", "@(@,String)", "@(String)", "Null(~())", "_Future<@>(@)", "~(Object?,Object?)", "~(Event)", "String(String)", "~(Node0,Node0?)", "Element(Node0)", "Board(Board,Board)", "~(@)"],
+    types: ["~()", "~(MouseEvent)", "~(~())", "Null(@)", "Null()", "bool(Node0)", "bool(NodeValidator)", "bool(String)", "bool(Element,String,String,_Html5NodeValidator)", "@(@)", "@(@,String)", "@(String)", "Null(~())", "_Future<@>(@)", "~(Object?,Object?)", "~(Event)", "String(String)", "~(Node0,Node0?)", "Element(Node0)", "~(@)"],
     interceptorsByTag: null,
     leafTags: null,
     arrayRti: Symbol("$ti")
   };
-  A._Universe_addRules(init.typeUniverse, JSON.parse('{"PlainJavaScriptObject":"LegacyJavaScriptObject","UnknownJavaScriptObject":"LegacyJavaScriptObject","JavaScriptFunction":"LegacyJavaScriptObject","AbortPaymentEvent":"Event","ExtendableEvent":"Event","AElement":"SvgElement","GraphicsElement":"SvgElement","AudioElement":"HtmlElement","MediaElement":"HtmlElement","ShadowRoot":"Node0","DocumentFragment":"Node0","XmlDocument":"Document","Window":"EventTarget","PointerEvent":"MouseEvent","CompositionEvent":"UIEvent","CDataSection":"CharacterData","Text":"CharacterData","MathMLElement":"Element","HtmlFormControlsCollection":"HtmlCollection","JSBool":{"bool":[]},"JSNull":{"Null":[]},"JSArray":{"List":["1"],"Iterable":["1"]},"JSUnmodifiableArray":{"JSArray":["1"],"List":["1"],"Iterable":["1"]},"ArrayIterator":{"Iterator":["1"]},"JSNumber":{"num":[]},"JSInt":{"int":[],"num":[]},"JSNumNotInt":{"num":[]},"JSString":{"String":[],"Pattern":[]},"LateError":{"Error":[]},"EfficientLengthIterable":{"Iterable":["1"]},"ListIterable":{"Iterable":["1"]},"ListIterator":{"Iterator":["1"]},"MappedIterable":{"Iterable":["2"],"Iterable.E":"2"},"MappedIterator":{"Iterator":["2"]},"MappedListIterable":{"ListIterable":["2"],"Iterable":["2"],"ListIterable.E":"2","Iterable.E":"2"},"WhereIterable":{"Iterable":["1"],"Iterable.E":"1"},"WhereIterator":{"Iterator":["1"]},"ReversedListIterable":{"ListIterable":["1"],"Iterable":["1"],"ListIterable.E":"1","Iterable.E":"1"},"NullError":{"TypeError":[],"Error":[]},"JsNoSuchMethodError":{"Error":[]},"UnknownJsTypeError":{"Error":[]},"_StackTrace":{"StackTrace":[]},"Closure":{"Function":[]},"Closure0Args":{"Function":[]},"Closure2Args":{"Function":[]},"TearOffClosure":{"Function":[]},"StaticClosure":{"Function":[]},"BoundClosure":{"Function":[]},"RuntimeError":{"Error":[]},"_AssertionError":{"Error":[]},"JsLinkedHashMap":{"MapMixin":["1","2"],"LinkedHashMap":["1","2"],"Map":["1","2"],"MapMixin.K":"1","MapMixin.V":"2"},"LinkedHashMapKeyIterable":{"Iterable":["1"],"Iterable.E":"1"},"LinkedHashMapKeyIterator":{"Iterator":["1"]},"_Error":{"Error":[]},"_TypeError":{"TypeError":[],"Error":[]},"_Future":{"Future":["1"]},"AsyncError":{"Error":[]},"_Zone":{"Zone":[]},"_RootZone":{"_Zone":[],"Zone":[]},"_LinkedHashSet":{"SetMixin":["1"],"LinkedHashSet":["1"],"Set":["1"],"Iterable":["1"],"SetMixin.E":"1"},"_LinkedHashSetIterator":{"Iterator":["1"]},"ListBase":{"ListMixin":["1"],"List":["1"],"Iterable":["1"]},"MapBase":{"MapMixin":["1","2"],"Map":["1","2"]},"MapMixin":{"Map":["1","2"]},"_SetBase":{"SetMixin":["1"],"Set":["1"],"Iterable":["1"]},"int":{"num":[]},"String":{"Pattern":[]},"AssertionError":{"Error":[]},"TypeError":{"Error":[]},"NullThrownError":{"Error":[]},"ArgumentError":{"Error":[]},"RangeError":{"Error":[]},"IndexError":{"Error":[]},"UnsupportedError":{"Error":[]},"UnimplementedError":{"Error":[]},"StateError":{"Error":[]},"ConcurrentModificationError":{"Error":[]},"OutOfMemoryError":{"Error":[]},"StackOverflowError":{"Error":[]},"CyclicInitializationError":{"Error":[]},"_StringStackTrace":{"StackTrace":[]},"DivElement":{"Element":[],"Node0":[],"EventTarget":[]},"Element":{"Node0":[],"EventTarget":[]},"MouseEvent":{"Event":[]},"Node0":{"EventTarget":[]},"_Html5NodeValidator":{"NodeValidator":[]},"HtmlElement":{"Element":[],"Node0":[],"EventTarget":[]},"AnchorElement":{"Element":[],"Node0":[],"EventTarget":[]},"AreaElement":{"Element":[],"Node0":[],"EventTarget":[]},"BaseElement":{"Element":[],"Node0":[],"EventTarget":[]},"BodyElement":{"Element":[],"Node0":[],"EventTarget":[]},"ButtonElement":{"Element":[],"Node0":[],"EventTarget":[]},"CharacterData":{"Node0":[],"EventTarget":[]},"Document":{"Node0":[],"EventTarget":[]},"_ChildrenElementList":{"ListMixin":["Element"],"List":["Element"],"Iterable":["Element"],"ListMixin.E":"Element"},"FormElement":{"Element":[],"Node0":[],"EventTarget":[]},"HtmlCollection":{"ListMixin":["Node0"],"ImmutableListMixin":["Node0"],"List":["Node0"],"JavaScriptIndexingBehavior":["Node0"],"Iterable":["Node0"],"ListMixin.E":"Node0","ImmutableListMixin.E":"Node0"},"HtmlDocument":{"Node0":[],"EventTarget":[]},"_ChildNodeListLazy":{"ListMixin":["Node0"],"List":["Node0"],"Iterable":["Node0"],"ListMixin.E":"Node0"},"NodeList":{"ListMixin":["Node0"],"ImmutableListMixin":["Node0"],"List":["Node0"],"JavaScriptIndexingBehavior":["Node0"],"Iterable":["Node0"],"ListMixin.E":"Node0","ImmutableListMixin.E":"Node0"},"SelectElement":{"Element":[],"Node0":[],"EventTarget":[]},"TableElement":{"Element":[],"Node0":[],"EventTarget":[]},"TableRowElement":{"Element":[],"Node0":[],"EventTarget":[]},"TableSectionElement":{"Element":[],"Node0":[],"EventTarget":[]},"TemplateElement":{"Element":[],"Node0":[],"EventTarget":[]},"UIEvent":{"Event":[]},"_Attr":{"Node0":[],"EventTarget":[]},"_NamedNodeMap":{"ListMixin":["Node0"],"ImmutableListMixin":["Node0"],"List":["Node0"],"JavaScriptIndexingBehavior":["Node0"],"Iterable":["Node0"],"ListMixin.E":"Node0","ImmutableListMixin.E":"Node0"},"_AttributeMap":{"MapMixin":["String","String"],"Map":["String","String"]},"_ElementAttributeMap":{"MapMixin":["String","String"],"Map":["String","String"],"MapMixin.K":"String","MapMixin.V":"String"},"_EventStream":{"Stream":["1"]},"_ElementEventStreamImpl":{"_EventStream":["1"],"Stream":["1"]},"NodeValidatorBuilder":{"NodeValidator":[]},"_SimpleNodeValidator":{"NodeValidator":[]},"_TemplatingNodeValidator":{"NodeValidator":[]},"_SvgNodeValidator":{"NodeValidator":[]},"FixedSizeListIterator":{"Iterator":["1"]},"_SameOriginUriPolicy":{"UriPolicy":[]},"_ValidatingTreeSanitizer":{"NodeTreeSanitizer":[]},"FilteredElementList":{"ListMixin":["Element"],"List":["Element"],"Iterable":["Element"],"ListMixin.E":"Element"},"ScriptElement0":{"SvgElement":[],"Element":[],"Node0":[],"EventTarget":[]},"SvgElement":{"Element":[],"Node0":[],"EventTarget":[]}}'));
+  A._Universe_addRules(init.typeUniverse, JSON.parse('{"PlainJavaScriptObject":"LegacyJavaScriptObject","UnknownJavaScriptObject":"LegacyJavaScriptObject","JavaScriptFunction":"LegacyJavaScriptObject","AbortPaymentEvent":"Event","ExtendableEvent":"Event","AElement":"SvgElement","GraphicsElement":"SvgElement","AudioElement":"HtmlElement","MediaElement":"HtmlElement","ShadowRoot":"Node0","DocumentFragment":"Node0","XmlDocument":"Document","Window":"EventTarget","PointerEvent":"MouseEvent","CompositionEvent":"UIEvent","CDataSection":"CharacterData","Text":"CharacterData","MathMLElement":"Element","HtmlFormControlsCollection":"HtmlCollection","JSBool":{"bool":[]},"JSNull":{"Null":[]},"JSArray":{"List":["1"],"Iterable":["1"]},"JSUnmodifiableArray":{"JSArray":["1"],"List":["1"],"Iterable":["1"]},"ArrayIterator":{"Iterator":["1"]},"JSNumber":{"num":[]},"JSInt":{"int":[],"num":[]},"JSNumNotInt":{"num":[]},"JSString":{"String":[],"Pattern":[]},"LateError":{"Error":[]},"EfficientLengthIterable":{"Iterable":["1"]},"ListIterable":{"Iterable":["1"]},"ListIterator":{"Iterator":["1"]},"MappedIterable":{"Iterable":["2"],"Iterable.E":"2"},"MappedIterator":{"Iterator":["2"]},"MappedListIterable":{"ListIterable":["2"],"Iterable":["2"],"ListIterable.E":"2","Iterable.E":"2"},"WhereIterable":{"Iterable":["1"],"Iterable.E":"1"},"WhereIterator":{"Iterator":["1"]},"ReversedListIterable":{"ListIterable":["1"],"Iterable":["1"],"ListIterable.E":"1","Iterable.E":"1"},"NullError":{"TypeError":[],"Error":[]},"JsNoSuchMethodError":{"Error":[]},"UnknownJsTypeError":{"Error":[]},"_StackTrace":{"StackTrace":[]},"Closure":{"Function":[]},"Closure0Args":{"Function":[]},"Closure2Args":{"Function":[]},"TearOffClosure":{"Function":[]},"StaticClosure":{"Function":[]},"BoundClosure":{"Function":[]},"RuntimeError":{"Error":[]},"_AssertionError":{"Error":[]},"JsLinkedHashMap":{"MapMixin":["1","2"],"LinkedHashMap":["1","2"],"Map":["1","2"],"MapMixin.K":"1","MapMixin.V":"2"},"LinkedHashMapKeyIterable":{"Iterable":["1"],"Iterable.E":"1"},"LinkedHashMapKeyIterator":{"Iterator":["1"]},"_Error":{"Error":[]},"_TypeError":{"TypeError":[],"Error":[]},"_Future":{"Future":["1"]},"AsyncError":{"Error":[]},"_Zone":{"Zone":[]},"_RootZone":{"_Zone":[],"Zone":[]},"_LinkedHashSet":{"SetMixin":["1"],"Set":["1"],"Iterable":["1"],"SetMixin.E":"1"},"_LinkedHashSetIterator":{"Iterator":["1"]},"ListBase":{"ListMixin":["1"],"List":["1"],"Iterable":["1"]},"MapBase":{"MapMixin":["1","2"],"Map":["1","2"]},"MapMixin":{"Map":["1","2"]},"_SetBase":{"SetMixin":["1"],"Set":["1"],"Iterable":["1"]},"int":{"num":[]},"String":{"Pattern":[]},"AssertionError":{"Error":[]},"TypeError":{"Error":[]},"NullThrownError":{"Error":[]},"ArgumentError":{"Error":[]},"RangeError":{"Error":[]},"IndexError":{"Error":[]},"UnsupportedError":{"Error":[]},"UnimplementedError":{"Error":[]},"StateError":{"Error":[]},"ConcurrentModificationError":{"Error":[]},"OutOfMemoryError":{"Error":[]},"StackOverflowError":{"Error":[]},"CyclicInitializationError":{"Error":[]},"_StringStackTrace":{"StackTrace":[]},"DivElement":{"Element":[],"Node0":[],"EventTarget":[]},"Element":{"Node0":[],"EventTarget":[]},"MouseEvent":{"Event":[]},"Node0":{"EventTarget":[]},"_Html5NodeValidator":{"NodeValidator":[]},"HtmlElement":{"Element":[],"Node0":[],"EventTarget":[]},"AnchorElement":{"Element":[],"Node0":[],"EventTarget":[]},"AreaElement":{"Element":[],"Node0":[],"EventTarget":[]},"BaseElement":{"Element":[],"Node0":[],"EventTarget":[]},"BodyElement":{"Element":[],"Node0":[],"EventTarget":[]},"ButtonElement":{"Element":[],"Node0":[],"EventTarget":[]},"CharacterData":{"Node0":[],"EventTarget":[]},"Document":{"Node0":[],"EventTarget":[]},"_ChildrenElementList":{"ListMixin":["Element"],"List":["Element"],"Iterable":["Element"],"ListMixin.E":"Element"},"FormElement":{"Element":[],"Node0":[],"EventTarget":[]},"HtmlCollection":{"ListMixin":["Node0"],"ImmutableListMixin":["Node0"],"List":["Node0"],"JavaScriptIndexingBehavior":["Node0"],"Iterable":["Node0"],"ListMixin.E":"Node0","ImmutableListMixin.E":"Node0"},"HtmlDocument":{"Node0":[],"EventTarget":[]},"_ChildNodeListLazy":{"ListMixin":["Node0"],"List":["Node0"],"Iterable":["Node0"],"ListMixin.E":"Node0"},"NodeList":{"ListMixin":["Node0"],"ImmutableListMixin":["Node0"],"List":["Node0"],"JavaScriptIndexingBehavior":["Node0"],"Iterable":["Node0"],"ListMixin.E":"Node0","ImmutableListMixin.E":"Node0"},"SelectElement":{"Element":[],"Node0":[],"EventTarget":[]},"TableElement":{"Element":[],"Node0":[],"EventTarget":[]},"TableRowElement":{"Element":[],"Node0":[],"EventTarget":[]},"TableSectionElement":{"Element":[],"Node0":[],"EventTarget":[]},"TemplateElement":{"Element":[],"Node0":[],"EventTarget":[]},"UIEvent":{"Event":[]},"_Attr":{"Node0":[],"EventTarget":[]},"_NamedNodeMap":{"ListMixin":["Node0"],"ImmutableListMixin":["Node0"],"List":["Node0"],"JavaScriptIndexingBehavior":["Node0"],"Iterable":["Node0"],"ListMixin.E":"Node0","ImmutableListMixin.E":"Node0"},"_AttributeMap":{"MapMixin":["String","String"],"Map":["String","String"]},"_ElementAttributeMap":{"MapMixin":["String","String"],"Map":["String","String"],"MapMixin.K":"String","MapMixin.V":"String"},"_EventStream":{"Stream":["1"]},"_ElementEventStreamImpl":{"_EventStream":["1"],"Stream":["1"]},"NodeValidatorBuilder":{"NodeValidator":[]},"_SimpleNodeValidator":{"NodeValidator":[]},"_TemplatingNodeValidator":{"NodeValidator":[]},"_SvgNodeValidator":{"NodeValidator":[]},"FixedSizeListIterator":{"Iterator":["1"]},"_SameOriginUriPolicy":{"UriPolicy":[]},"_ValidatingTreeSanitizer":{"NodeTreeSanitizer":[]},"FilteredElementList":{"ListMixin":["Element"],"List":["Element"],"Iterable":["Element"],"ListMixin.E":"Element"},"ScriptElement0":{"SvgElement":[],"Element":[],"Node0":[],"EventTarget":[]},"SvgElement":{"Element":[],"Node0":[],"EventTarget":[]}}'));
   A._Universe_addErasedTypes(init.typeUniverse, JSON.parse('{"EfficientLengthIterable":1,"StreamSubscription":1,"ListBase":1,"MapBase":2,"_SetBase":1,"_ListBase_Object_ListMixin":1,"__SetBase_Object_SetMixin":1}'));
   var string$ = {
     Error_: "Error handler must accept one Object or one Object and a StackTrace as arguments, and return a value of the returned future's type"
@@ -6690,6 +6654,7 @@
       JSArray_Board: findType("JSArray<Board>"),
       JSArray_DivElement: findType("JSArray<DivElement>"),
       JSArray_Element: findType("JSArray<Element>"),
+      JSArray_Node: findType("JSArray<Node>"),
       JSArray_NodeValidator: findType("JSArray<NodeValidator>"),
       JSArray_String: findType("JSArray<String>"),
       JSArray_dynamic: findType("JSArray<@>"),

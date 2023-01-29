@@ -1,6 +1,5 @@
 import 'dart:math' show Random;
 
-final debug = false;
 const n = 3;
 final rand = Random();
 
@@ -9,7 +8,6 @@ class Board {
   static int indexToRow(int index) => index ~/ n;
   static int indexToColumn(int index) => index % n;
   static int toIndex(int row, int column) => row * n + column;
-
   final List<int> tiles;
   Board(this.tiles);
 
@@ -99,79 +97,64 @@ class Board {
 }
 
 class Node {
-  Board? previous;
+  Board state;
+  Node? parent;
+  int action;
   int g;
-  Node([this.previous, int? g]) : this.g = g ?? 0;
+  Node(this.state, this.parent, this.action, this.g);
   @override
-  String toString() => "g: $g, previous:\n$previous";
+  String toString() => "g: $g, previous:\n$parent";
+}
+
+// Turn list into a priority queue...
+extension _ on List<Node> {
+  void insertInOrder(Node n) {
+    var start = 0, end = this.length;
+    while (start != end) {
+      final index = (end + start) ~/ 2;
+      if (this[index].g < n.g) {
+        start = index + 1;
+      } else {
+        end = index;
+      }
+    }
+    this.insert(start, n);
+  }
 }
 
 List<Board> a_star_solve(Board board) {
-  if (debug) {
-    print("Solving:");
-    print(board);
-  }
-  final visited = {board: Node(board, 0)}, frontier = {board};
+  final node0 = Node(board, null, -1, 0),
+      frontier = [node0],
+      reached = {board: node0};
 
-  Board? solution;
+  late Node solution;
   while (frontier.isNotEmpty) {
-    final best = frontier.fold<Board>(
-        frontier.first,
-        (previousBoard, nextBoard) =>
-            visited[previousBoard]!.g + previousBoard.heuristic() <
-                    visited[nextBoard]!.g + nextBoard.heuristic()
-                ? previousBoard
-                : nextBoard);
+    final best = frontier.first;
     frontier.remove(best);
-    final g = visited[best]!.g;
 
-    if (debug) {
-      print("-" * 50);
-      print("In frontier: ${frontier.length}");
-      print("Best:");
-      print(best);
-      print("Heuristic: ${best.heuristic()}");
-      print("Recorded g: $g");
-      print("-" * 50);
-    }
-    if (best.heuristic() == 0) {
+    if (best.state.heuristic() == 0) {
       solution = best;
       break;
     }
 
-    for (final move in best.validMoves()) {
-      final nextBoard = Board.from(best, move);
-      if (!visited.containsKey(nextBoard)) {
-        visited[nextBoard] = Node(best, g + 1);
-        frontier.add(nextBoard);
-        if (debug) {
-          print("Adding to frontier:");
-          print(nextBoard);
-          print("  Heuristic: ${nextBoard.heuristic()}");
-          print("  Recording g: ${visited[nextBoard]!.g}");
-        }
-      } else if (visited[nextBoard]!.g > g + 1) {
-        visited[nextBoard]!
-          ..previous = best
-          ..g = g + 1;
-        frontier.add(nextBoard);
-        if (debug) {
-          print("Updating:");
-          print(nextBoard);
-          print("  Heuristic: ${nextBoard.heuristic()}");
-          print("  Recording g: ${visited[nextBoard]!.g}");
-        }
+    for (final move in best.state.validMoves()) {
+      final nextBoard = Board.from(best.state, move);
+      if (!reached.containsKey(nextBoard)) {
+        final nextNode = Node(nextBoard, best, move, best.g + 1);
+        reached[nextBoard] = nextNode;
+        frontier.add(nextNode);
+      } else if (reached[nextBoard]!.g > best.g + 1) {
+        reached[nextBoard]!
+          ..parent = best
+          ..g = best.g + 1;
+        frontier.add(reached[nextBoard]!);
       }
     }
   }
   final result = <Board>[];
-  while (solution != board) {
-    if (debug) {
-      print("Adding to solutions:");
-      print(solution);
-    }
-    result.add(solution!);
-    solution = visited[solution]!.previous;
+  while (solution.state != board) {
+    result.add(solution.state);
+    solution = solution.parent!;
   }
   return [for (final board in result.reversed) board];
 }
