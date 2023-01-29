@@ -142,12 +142,12 @@ List<Board> a_star_solve(Board board) {
       if (!reached.containsKey(nextBoard)) {
         final nextNode = Node(nextBoard, best, move, best.g + 1);
         reached[nextBoard] = nextNode;
-        frontier.add(nextNode);
+        frontier.insertInOrder(nextNode);
       } else if (reached[nextBoard]!.g > best.g + 1) {
         reached[nextBoard]!
           ..parent = best
           ..g = best.g + 1;
-        frontier.add(reached[nextBoard]!);
+        frontier.insertInOrder(reached[nextBoard]!);
       }
     }
   }
